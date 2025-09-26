@@ -1,0 +1,59 @@
+prospect_name,resource_name,job_title,company_name,email,phone,timezone
+Michael Chen,Alice Rivera,VP of IT,Contoso Ltd,michael.chen@contoso.com,+1-646-555-0175,America/New_York
+Priya Nair,Alice Rivera,Head of FP&A,Fabrikam Inc,priya.nair@fabrikam.co,+44-20-7946-0958,Europe/London
+Diego Alvarez,Alice Rivera,Oracle Applications Manager,Globex Corporation,diego.alvarez@globex.com,+34-91-555-0101,Europe/Madrid
+Sofia Rossi,Alice Rivera,Finance Systems Lead,Initech,sofia.rossi@initech.com,+61-2-5550-6060,Australia/Sydney
+Liam O'Connor,Alice Rivera,CIO,Acme Corp,liam.oconnor@acme.com,+1-415-555-0123,America/Los_Angeles
+Aisha Khan,Alice Rivera,Director of Finance,Blue Yonder Ltd,aisha.khan@blueyonder.co.uk,+44-161-555-0199,Europe/London
+Hiro Tanaka,Alice Rivera,IT Director,Nippon Kogyo,hiro.tanaka@nipponkogyo.jp,+81-3-5550-1122,Asia/Tokyo
+Emma Johansson,Alice Rivera,CFO,Nordica AB,emma.johansson@nordica.se,+46-8-555-01010,Europe/Stockholm
+Carlos Mendes,Alice Rivera,Head of IT,Lusitania SA,carlos.mendes@lusitania.pt,+351-21-555-0202,Europe/Lisbon
+Fatima Zahra,Alice Rivera,ERP Manager,Atlas Holdings,fatima.zahra@atlas.ma,+212-5-20-55-55-55,Africa/Casablanca
+Jean Dupont,Alice Rivera,Finance Director,Compagnie Lumière,jean.dupont@lumieresa.fr,+33-1-55-55-55-55,Europe/Paris
+Anna Müller,Alice Rivera,Head of Controlling,AlpenTech GmbH,anna.mueller@alpentech.de,+49-89-555-0101,Europe/Berlin
+Ravi Patel,Alice Rivera,CTO,TechMahika,ravi.patel@techmahika.in,+91-22-5550-9090,Asia/Kolkata
+Isabella Garcia,Alice Rivera,Applications Lead,Solara Energia,isabella.garcia@solara.com.br,+55-11-5550-7788,America/Sao_Paulo
+Hiro Tanaka,Alice Rivera,IT Director,Nippon Kogyo,hiro.tanaka@nipponkogyo.jp,+81-3-5550-1122,Asia/Tokyo
+Emma Johansson,Alice Rivera,CFO,Nordica AB,emma.johansson@nordica.se,+46-8-555-01010,Europe/Stockholm
+Carlos Mendes,Alice Rivera,Head of IT,Lusitania SA,carlos.mendes@lusitania.pt,+351-21-555-0202,Europe/Lisbon
+Fatima Zahra,Alice Rivera,ERP Manager,Atlas Holdings,fatima.zahra@atlas.ma,+212-5-20-55-55-55,Africa/Casablanca
+Jean Dupont,Alice Rivera,Finance Director,Compagnie Lumière,jean.dupont@lumieresa.fr,+33-1-55-55-55-55,Europe/Paris
+Anna Müller,Alice Rivera,Head of Controlling,AlpenTech GmbH,anna.mueller@alpentech.de,+49-89-555-0101,Europe/Berlin
+Ravi Patel,Alice Rivera,CTO,TechMahika,ravi.patel@techmahika.in,+91-22-5550-9090,Asia/Kolkata
+Isabella Garcia,Alice Rivera,Applications Lead,Solara Energia,isabella.garcia@solara.com.br,+55-11-5550-7788,America/Sao_Paulo
+Olivia Jones,Alice Rivera,Applications Lead,OmniTech,olivia.jones@finedge.biz,+1-555-391-3887,America/Sao_Paulo
+David Brown,Alice Rivera,VP of IT,OmniTech,david.brown@greentech.co,+1-555-566-5957,Europe/Paris
+Sarah Jones,Alice Rivera,Applications Lead,CyberNova,sarah.jones@pioneersys.com,+1-555-136-1912,Europe/Paris
+Sophia Brown,Alice Rivera,Finance Director,Skyline Inc,sophia.brown@futuresoft.com,+1-555-783-1627,Australia/Sydney
+Daniel Davis,Alice Rivera,Applications Lead,BrightPath,daniel.davis@greentech.co,+1-555-670-7891,America/New_York
+Olivia Smith,Alice Rivera,VP of IT,BrightPath,olivia.smith@omnitech.ai,+1-555-621-2343,Europe/Madrid
+David Davis,Alice Rivera,CFO,Skyline Inc,david.davis@pioneersys.com,+1-555-717-1623,Asia/Kolkata
+John Jones,Alice Rivera,VP of IT,OmniTech,john.jones@omnitech.ai,+1-555-418-7998,Europe/Paris
+Maria Williams,Alice Rivera,VP of IT,NextGen Corp,maria.williams@brightpath.org,+1-555-772-6390,Europe/London
+Laura Williams,Alice Rivera,Finance Manager,DataCore,laura.williams@greentech.co,+1-555-336-2929,Europe/Paris
+David Miller,Alice Rivera,CFO,CyberNova,david.miller@datacore.net,+1-555-257-2175,Australia/Sydney
+Daniel Taylor,Alice Rivera,CFO,BrightPath,daniel.taylor@futuresoft.com,+1-555-389-1405,Asia/Kolkata
+Maria Brown,Alice Rivera,ERP Manager,NextGen Corp,maria.brown@nextgen.com,+1-555-432-4368,Europe/Berlin
+Laura Davis,Alice Rivera,Finance Director,FutureSoft,laura.davis@datacore.net,+1-555-630-1503,America/New_York
+John Wilson,Alice Rivera,CTO,CyberNova,john.wilson@greentech.co,+1-555-370-1731,Australia/Sydney
+James Miller,Alice Rivera,Finance Manager,CyberNova,james.miller@greentech.co,+1-555-786-4340,Asia/Kolkata
+Olivia Williams,Alice Rivera,Business Analyst,NextGen Corp,olivia.williams@pioneersys.com,+1-555-860-2482,Europe/Berlin
+Daniel Miller,Alice Rivera,CFO,FinEdge,daniel.miller@omnitech.ai,+1-555-469-8843,Europe/Berlin
+David Williams,Alice Rivera,CFO,DataCore,david.williams@datacore.net,+1-555-697-6895,America/Sao_Paulo
+Robert Taylor,Alice Rivera,CTO,FutureSoft,robert.taylor@datacore.net,+1-555-835-8948,Europe/Berlin
+John Jones,Alice Rivera,Finance Director,NextGen Corp,john.jones@datacore.net,+1-555-768-6234,Europe/Paris
+David Smith,Alice Rivera,Head of Operations,GreenTech Ltd,david.smith@brightpath.org,+1-555-881-6223,Australia/Sydney
+Sophia Taylor,Alice Rivera,Head of Operations,Skyline Inc,sophia.taylor@skylineinc.com,+1-555-985-8939,Europe/Madrid
+Laura Wilson,Alice Rivera,Finance Manager,DataCore,laura.wilson@nextgen.com,+1-555-267-4446,America/Los_Angeles
+Daniel Jones,Alice Rivera,VP of IT,OmniTech,daniel.jones@skylineinc.com,+1-555-453-8544,Europe/Berlin
+John Williams,Alice Rivera,CTO,Pioneer Systems,john.williams@omnitech.ai,+1-555-797-5485,Europe/Paris
+Robert Jones,Alice Rivera,IT Director,FutureSoft,robert.jones@greentech.co,+1-555-792-3683,America/New_York
+Sarah Taylor,Alice Rivera,CTO,Pioneer Systems,sarah.taylor@cybernova.io,+1-555-504-1309,America/Sao_Paulo
+Daniel Davis,Alice Rivera,Finance Manager,FinEdge,daniel.davis@futuresoft.com,+1-555-720-7021,Europe/London
+David Williams,Alice Rivera,Business Analyst,FinEdge,david.williams@pioneersys.com,+1-555-675-6281,America/Los_Angeles
+David Brown,Alice Rivera,IT Director,CyberNova,david.brown@pioneersys.com,+1-555-480-6010,America/Sao_Paulo
+Daniel Wilson,Alice Rivera,Business Analyst,CyberNova,daniel.wilson@brightpath.org,+1-555-411-5955,Australia/Sydney
+James Jones,Alice Rivera,ERP Manager,FinEdge,james.jones@nextgen.com,+1-555-955-1893,Europe/Paris
+Sarah Williams,Alice Rivera,CFO,Skyline Inc,sarah.williams@brightpath.org,+1-555-174-1311,Europe/Berlin
+Sarah Taylor,Alice Rivera,CTO,DataCore,sarah.taylor@omnitech.ai,+1-555-689-8655,Europe/Paris
+Laura Wilson,Alice Rivera,Head of Operations,Pioneer Systems,laura.wilson@datacore.net,+1-555-882-1574,Asia/Tokyo

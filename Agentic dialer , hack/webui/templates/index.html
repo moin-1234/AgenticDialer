@@ -1,0 +1,571 @@
+{% extends "base.html" %}
+{% block content %}
+<section id="dashboardView">
+
+  <!-- Controls -->
+  <section class="controls">
+    <form id="campaignForm" class="controls-form">
+      <label for="campaign">Campaign</label>
+      <select name="campaign" id="campaign" class="select">
+        {% for opt in campaign_options %}
+          <option value="{{ opt.key }}" {% if opt.selected %}selected{% endif %}>{{ opt.label }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="btn primary">Apply</button>
+    </form>
+    <button id="campaignUploadBtn" class="btn ghost sm icon-btn" aria-label="Upload Campaign" title="Upload Campaign"><iconify-icon icon="mdi:file-upload-outline"></iconify-icon></button>
+    <input type="file" id="campaignFile" accept=".py" style="display:none" />
+    <span class="muted">Upload Campaign</span>
+    <div id="campaignBadge" class="badge {% if not campaign %}warning{% endif %}">
+      Campaign: <strong>
+        {% if campaign_label %}
+          {{ campaign_label }}
+        {% elif campaign %}
+          {{ campaign }}
+        {% else %}
+          Not set
+        {% endif %}
+      </strong>
+    </div>
+
+    <label style="display:flex; align-items:center; gap:6px; margin-top:8px">
+      <input type="checkbox" id="autoNextToggle" /> Auto Next
+    </label>
+  </section>
+
+  <!-- Status -->
+  <section id="statusPanel" class="status-panel">
+    <div class="badge">
+      Status: <strong id="callStatus">idle</strong>
+      <span id="statusDetails" style="margin-left:8px; color:#666;"></span>
+    </div>
+    <div style="margin-left:auto; display:flex; gap:16px; flex-wrap:wrap; align-items:center; margin-top:8px">
+      <button id="callNextBtn" class="btn" data-next-index="{{ start_index + leads|length }}">Call Next</button>
+      <button id="endCallBtn" class="btn danger" disabled>End Current Call</button>
+      <button id="stopAllBtn" class="btn danger ghost">End Session</button>
+    </div>
+  </section>
+
+  <!-- Current Call -->
+  <section id="currentCallSection" style="display:none;">
+    <div id="currentCallCard" class="call-card">
+      <div class="avatar"><div id="callSpinner" class="spinner"></div></div>
+      <div style="flex:1;">
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px; margin-top:18px">
+          <h3 id="callHeadline" style="margin:1px; font-size:18px;">Connecting…</h3>
+          <span id="callChip" class="chip">Waiting</span>
+        </div>
+        <div id="callProspect" style="font-size:16px; font-weight:600; margin-bottom:2px;">—</div>
+        <div id="callCompany" class="muted" style="font-size:14px; margin-bottom:8px;">—</div>
+        <div style="display:flex; gap:16px; flex-wrap:wrap; color:#d1d5db; font-size:13px;">
+          <div><strong>Title:</strong> <span id="callJob">—</span></div>
+          <div><strong>Phone:</strong> <span id="callPhone">—</span></div>
+          <div><strong>Email:</strong> <span id="callEmail">—</span></div>
+          <div><strong>Timezone:</strong> <span id="callTz">—</span></div>
+          <div><strong>Campaign:</strong> <span id="callCampaign">—</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Leads Table -->
+  <section class="leads">
+    <div class="leads-header">
+      <h2>Prospects (Page {{ page }}/{{ total_pages }})</h2>
+      <div class="pager">
+        {% if page > 1 %}
+          <a class="btn ghost" href="/?page={{ page - 1 }}{% if campaign %}&campaign={{ campaign }}{% endif %}">Prev</a>
+        {% endif %}
+        {% if page < total_pages %}
+          <a class="btn ghost" href="/?page={{ page + 1 }}{% if campaign %}&campaign={{ campaign }}{% endif %}">Next</a>
+        {% endif %}
+      </div>
+    </div>
+
+    <table class="table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Prospect</th>
+          <th>Company</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for lead in leads %}
+        <tr>
+          <td>{{ loop.index + start_index }}</td>
+          <td>{{ lead.prospect_name }}</td>
+          <td>{{ lead.company_name }}</td>
+          <td>
+            <button class="btn primary startCallBtn"
+              data-lead-index="{{ loop.index0 + start_index }}"
+              data-prospect-name="{{ lead.prospect_name }}"
+              data-company-name="{{ lead.company_name }}"
+              data-job-title="{{ lead.job_title if lead.job_title is defined else '' }}"
+              data-phone="{{ lead.phone if lead.phone is defined else '' }}"
+              data-email="{{ lead.email if lead.email is defined else '' }}"
+              data-timezone="{{ lead.timezone if lead.timezone is defined else '' }}">
+              Start Call
+            </button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <nav class="pagination">
+      {% for p in range(1, total_pages + 1) %}
+        <a class="page-link {% if p == page %}active{% endif %}"
+           href="/?page={{ p }}{% if campaign %}&campaign={{ campaign }}{% endif %}">
+           {{ p }}
+        </a>
+      {% endfor %}
+    </nav>
+  </section>
+
+</section> <!-- /dashboardView -->
+
+<!-- Campaigns Editor -->
+<section id="campaignsView" style="display:none;">
+  <!-- Campaign creator toolbar -->
+  <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:10px;">
+    <input type="text" id="campName" placeholder="Campaign name (e.g., My Product)" style="flex:1 1 320px; min-width:260px; padding:8px 10px; border:1px solid var(--border); border-radius:8px; background:#0b1220; color:var(--text);" />
+    <input type="text" id="campModule" placeholder="Module (optional, e.g., my-product)" style="flex:0 0 260px; min-width:220px; padding:8px 10px; border:1px solid var(--border); border-radius:8px; background:#0b1220; color:var(--text);" />
+    <button id="createCampBtn" class="btn primary">Create Campaign</button>
+  </div>
+
+  <!-- Campaign selector toolbar -->
+  <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:12px;">
+    <select id="campSelect" class="select" style="min-width:280px;"></select>
+    <button id="loadCampBtn" class="btn">Load Selected</button>
+    <button id="saveCampBtn" class="btn primary">Save Changes</button>
+    <button id="seedBtn" class="btn ghost" title="Seed all local campaigns to Supabase">Seed to Supabase</button>
+  </div>
+
+  <div>
+    <button id="agentUploadBtn" class="btn ghost sm icon-btn" aria-label="Upload Agent" title="Upload Agent"><iconify-icon icon="mdi:file-upload-outline"></iconify-icon>&nbsp;Upload Agent</button>
+    <input type="file" id="agentFile" accept=".txt,.md" style="display:none" />
+    <span class="muted">Upload Agent</span>
+
+    <button id="sessionUploadBtn" class="btn ghost sm icon-btn" aria-label="Upload Session" title="Upload Session"><iconify-icon icon="mdi:file-upload-outline"></iconify-icon>&nbsp;Upload Session</button>
+    <input type="file" id="sessionFile" accept=".txt,.md" style="display:none" />
+    <span class="muted">Upload Session</span>
+  </div>
+
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+    <div style="display:flex; flex-direction:column; gap:6px;">
+      <label class="muted" for="agentText">Agent Instructions</label>
+      <textarea id="agentText" rows="8" placeholder="Paste or write agent instructions"></textarea>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:6px;">
+      <label class="muted" for="sessionText">Session Instructions</label>
+      <textarea id="sessionText" rows="8" placeholder="Paste or write session script"></textarea>
+    </div>
+  </div>
+
+  <div style="margin-top:16px; display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+    <div>
+      <h3>Built-in</h3>
+      <table class="table compact" id="builtinCampTable">
+        <thead><tr><th>Name</th><th>Module</th></tr></thead>
+        <tbody id="builtinCampBody"></tbody>
+      </table>
+    </div>
+    <div>
+      <h3>Custom</h3>
+      <table class="table compact" id="customCampTable">
+        <thead><tr><th>Name</th><th>Module</th><th>Actions</th></tr></thead>
+        <tbody id="customCampBody"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- CSV Manager -->
+<section id="csvView" style="display:none;">
+  <section class="panel" id="csvManager">
+    <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+      <h2>CSV Manager</h2>
+      <div class="badge">Active: <strong id="activeCsv">{{ active_csv if active_csv else 'leads.csv' }}</strong></div>
+    </div>
+    <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-top:10px;">
+      <input type="file" id="csvFileInput" accept=".csv" />
+      <button id="uploadCsvBtn" class="btn sm icon-btn"><iconify-icon icon="mdi:upload"></iconify-icon></button>
+      <button id="refreshCsvBtn" class="btn ghost sm icon-btn"><iconify-icon icon="mdi:refresh"></iconify-icon></button>
+    </div>
+    <div id="csvListWrap" style="margin-top:12px; overflow:auto;">
+      <table class="table compact">
+        <thead><tr><th>File</th><th>Details</th><th>Actions</th></tr></thead>
+        <tbody id="csvTableBody"></tbody>
+      </table>
+    </div>
+    <div id="csvPreviewWrap" style="display:none; margin-top:12px;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <h3 id="previewTitle">Preview</h3>
+        <button id="closePreviewBtn" class="btn ghost">Close</button>
+      </div>
+      <div style="overflow:auto; border:1px solid #1f2937; border-radius:8px; margin-top:8px;">
+        <table class="table" id="previewTable">
+          <thead><tr id="previewHead"></tr></thead>
+          <tbody id="previewBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</section>
+
+<div id="toastContainer" class="toast-container"></div>
+
+<script>
+  (function(){
+    // Elements used across views
+    const dashboardView = document.getElementById('dashboardView');
+    const csvView = document.getElementById('csvView');
+    const campaignsView = document.getElementById('campaignsView');
+
+    const statusEl = document.getElementById('callStatus');
+    const detailsEl = document.getElementById('statusDetails');
+    const endBtn = document.getElementById('endCallBtn');
+    const campaignForm = document.getElementById('campaignForm');
+    const campaignSelect = document.getElementById('campaign');
+    const campaignBadge = document.getElementById('campaignBadge');
+    const nextBtn = document.getElementById('callNextBtn');
+    const autoNextToggle = document.getElementById('autoNextToggle');
+    const stopAllBtn = document.getElementById('stopAllBtn');
+    const callSection = document.getElementById('currentCallSection');
+    const callHeadline = document.getElementById('callHeadline');
+    const callChip = document.getElementById('callChip');
+    const callProspect = document.getElementById('callProspect');
+    const callCompany = document.getElementById('callCompany');
+    const callJob = document.getElementById('callJob');
+    const callPhone = document.getElementById('callPhone');
+    const callEmail = document.getElementById('callEmail');
+    const callTz = document.getElementById('callTz');
+    const callCampaign = document.getElementById('callCampaign');
+    const callSpinner = document.getElementById('callSpinner');
+    const topProgress = document.getElementById('topProgress');
+
+    // CSV view elements
+    const csvFileInput = document.getElementById('csvFileInput');
+    const uploadCsvBtn = document.getElementById('uploadCsvBtn');
+    const refreshCsvBtn = document.getElementById('refreshCsvBtn');
+    const csvTableBody = document.getElementById('csvTableBody');
+    const activeCsv = document.getElementById('activeCsv');
+    const previewWrap = document.getElementById('csvPreviewWrap');
+    const previewTitle = document.getElementById('previewTitle');
+    const previewHead = document.getElementById('previewHead');
+    const previewBody = document.getElementById('previewBody');
+    const closePreviewBtn = document.getElementById('closePreviewBtn');
+
+    // Campaigns view elements
+    const campNameInput = document.getElementById('campName');
+    const campSelect = document.getElementById('campSelect');
+    const createCampBtn = document.getElementById('createCampBtn');
+    const loadCampBtn = document.getElementById('loadCampBtn');
+    const saveCampBtn = document.getElementById('saveCampBtn');
+    const seedBtn = document.getElementById('seedBtn');
+    const agentTextEl = document.getElementById('agentText');
+    const sessionTextEl = document.getElementById('sessionText');
+    const agentUploadBtn = document.getElementById('agentUploadBtn');
+    const sessionUploadBtn = document.getElementById('sessionUploadBtn');
+    const agentFile = document.getElementById('agentFile');
+    const sessionFile = document.getElementById('sessionFile');
+    const customCampBody = document.getElementById('customCampBody');
+    const builtinCampBody = document.getElementById('builtinCampBody');
+
+    let lastRunning = false;
+    let lastLead = null;
+
+    // Helpers
+    function toast(msg, type='info'){
+      const wrap = document.getElementById('toastContainer');
+      const el = document.createElement('div');
+      el.className = 'toast ' + (type || 'info');
+      el.textContent = msg;
+      wrap.appendChild(el);
+      requestAnimationFrame(() => { el.style.opacity = '1'; });
+      setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity 300ms'; }, 2400);
+      setTimeout(() => { if (el.parentNode===wrap) wrap.removeChild(el); }, 2800);
+    }
+
+    function startProgress(){ if (topProgress){ topProgress.style.opacity = '1'; topProgress.style.width = '60%'; } }
+    function endProgress(){ if (topProgress){ topProgress.style.width = '100%'; setTimeout(()=>{ topProgress.style.opacity='0'; topProgress.style.width='0%'; }, 250); } }
+
+    async function postForm(url, data){
+      const body = new URLSearchParams();
+      Object.entries(data||{}).forEach(([k,v]) => { if (v!==undefined && v!==null) body.append(k, String(v)); });
+      startProgress();
+      const res = await fetch(url, { method:'POST', body });
+      endProgress();
+      if (!res.ok) throw new Error('Request failed');
+      return await res.json();
+    }
+    async function uploadFile(url, file){
+      const fd = new FormData(); fd.append('file', file);
+      startProgress();
+      const res = await fetch(url, { method:'POST', body: fd });
+      endProgress();
+      if (!res.ok) throw new Error('Upload failed');
+      return await res.json();
+    }
+    async function getJson(url){
+      startProgress();
+      const res = await fetch(url);
+      endProgress();
+      if (!res.ok) throw new Error('Request failed');
+      return await res.json();
+    }
+
+    // Status polling (dashboard)
+    async function refreshStatus(){
+      try {
+        const data = await getJson('/api/status');
+        statusEl && (statusEl.textContent = data.status || 'idle');
+        const label = data.lead_index ? `Lead #${data.lead_index}` : '';
+        const campName = data.campaign_label || data.campaign || '';
+        detailsEl && (detailsEl.textContent = `${label}${campName ? ' | Campaign: ' + campName : ''}`);
+        if (endBtn) endBtn.disabled = !data.running;
+        if (typeof data.auto_next === 'boolean') autoNextToggle && (autoNextToggle.checked = data.auto_next);
+
+        const running = !!data.running;
+        if (!lastRunning && running){
+          toast(`Call connected ${label ? '('+label+')' : ''}`, 'success');
+          if (callSpinner) callSpinner.style.display = 'none';
+          if (callHeadline) callHeadline.textContent = 'Connected';
+          if (callChip){ callChip.textContent = 'Live'; callChip.style.background = '#064e3b'; callChip.style.color = '#34d399'; }
+        } else if (lastRunning && !running){
+          toast('Call ended', 'info');
+          if (callSection) callSection.style.display = 'none';
+          if (callProspect) callProspect.dataset.prospect = '';
+        }
+        lastRunning = running;
+
+        if (data.lead){
+          if (callProspect){
+            const changed = callProspect.dataset.prospect !== (data.lead.prospect_name || '');
+            if (changed || callSection?.style.display==='none'){
+              callProspect.textContent = data.lead.prospect_name || '—';
+              callProspect.dataset.prospect = data.lead.prospect_name || '';
+              callCompany.textContent = data.lead.company_name || '—';
+              callJob.textContent = data.lead.job_title || '—';
+              callPhone.textContent = data.lead.phone || '—';
+              callEmail.textContent = data.lead.email || '—';
+              callTz.textContent = data.lead.timezone || '—';
+              callCampaign.textContent = campName || '—';
+              callSection.style.display = 'block';
+              if (!running){ if (callSpinner) callSpinner.style.display = 'block'; if (callHeadline) callHeadline.textContent='Connecting…'; if (callChip){ callChip.textContent='Waiting'; callChip.style.background='#1f2937'; callChip.style.color='#a7f3d0'; } }
+            }
+          }
+        } else if (!running){
+          if (callSection) callSection.style.display = 'none';
+          if (callProspect){ callProspect.dataset.prospect = ''; callProspect.textContent = '—'; }
+          if (callCompany) callCompany.textContent = '—';
+          if (callJob) callJob.textContent = '—';
+          if (callPhone) callPhone.textContent = '—';
+          if (callEmail) callEmail.textContent = '—';
+          if (callTz) callTz.textContent = '—';
+          if (callCampaign) callCampaign.textContent = '—';
+        }
+      } catch(e) { /* ignore */ }
+    }
+
+    // Campaign selection form (dashboard)
+    if (campaignForm){
+      campaignForm.addEventListener('submit', async (e)=>{
+        e.preventDefault();
+        const val = campaignSelect?.value || '';
+        try{
+          const resp = await postForm('/api/select_campaign', { campaign: val });
+          const label = (resp && resp.campaign_label) ? resp.campaign_label : (val || 'Not set');
+          if (campaignBadge) campaignBadge.innerHTML = 'Campaign: <strong>' + label + '</strong>';
+          if (!val) campaignBadge?.classList.add('warning'); else campaignBadge?.classList.remove('warning');
+          toast('Campaign applied','success');
+        }catch(e){ alert('Failed to set campaign'); }
+      });
+    }
+
+    // Start call for a specific lead
+    document.querySelectorAll('.startCallBtn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const idx = parseInt(btn.getAttribute('data-lead-index'));
+        const camp = campaignSelect?.value || '';
+        if (callProspect){
+          callProspect.textContent = btn.getAttribute('data-prospect-name') || '—';
+          callProspect.dataset.prospect = btn.getAttribute('data-prospect-name') || '';
+          callCompany.textContent = btn.getAttribute('data-company-name') || '—';
+          callJob.textContent = btn.getAttribute('data-job-title') || '—';
+          callPhone.textContent = btn.getAttribute('data-phone') || '—';
+          callEmail.textContent = btn.getAttribute('data-email') || '—';
+          callTz.textContent = btn.getAttribute('data-timezone') || '—';
+          callCampaign.textContent = campaignSelect?.options[campaignSelect.selectedIndex]?.text || '—';
+          callSpinner.style.display = 'block';
+          callHeadline.textContent = 'Connecting…';
+          callChip.textContent = 'Waiting';
+          callChip.style.background = '#1f2937';
+          callChip.style.color = '#a7f3d0';
+          callSection.style.display = 'block';
+        }
+        try{
+          btn.disabled = true;
+          await postForm('/api/start_call', { lead_global_index: idx, campaign: camp });
+          setTimeout(refreshStatus, 300);
+        }catch(e){ alert('Failed to start call'); }
+        finally{ btn.disabled = false; }
+      });
+    });
+
+    // Call next
+    if (nextBtn){
+      nextBtn.addEventListener('click', async ()=>{
+        const nextIdx = parseInt(nextBtn.getAttribute('data-next-index'));
+        const camp = campaignSelect?.value || '';
+        try{ nextBtn.disabled=true; await postForm('/api/start_call', { lead_global_index: nextIdx, campaign: camp }); setTimeout(refreshStatus,300);}catch(e){ alert('Failed to start next'); } finally{ nextBtn.disabled=false; }
+      });
+    }
+
+    // End call
+    endBtn && endBtn.addEventListener('click', async ()=>{ try{ endBtn.disabled=true; await postForm('/api/end_call', { auto_next: autoNextToggle?.checked }); setTimeout(refreshStatus,500);}catch(e){ alert('Failed to end call'); } finally{ endBtn.disabled=false; } });
+    // Auto-next
+    autoNextToggle && autoNextToggle.addEventListener('change', async ()=>{ try{ await postForm('/api/auto_next', { enabled: autoNextToggle.checked }); toast('Auto Next '+(autoNextToggle.checked?'enabled':'disabled'),'info'); }catch(e){ alert('Failed to update Auto Next'); } });
+    // End session
+    stopAllBtn && stopAllBtn.addEventListener('click', async ()=>{ try{ stopAllBtn.disabled=true; await postForm('/api/stop_all', {}); setTimeout(refreshStatus,400); toast('Session ended','error'); }catch(e){ alert('Failed to end session'); } finally{ stopAllBtn.disabled=false; } });
+
+    // CSV functions
+    function fmtBytes(bytes){ if (bytes<1024) return bytes+' B'; if (bytes<1024*1024) return (bytes/1024).toFixed(1)+' KB'; return (bytes/1024/1024).toFixed(1)+' MB'; }
+    function fmtDate(ts){ try{ return new Date(ts*1000).toLocaleString(); }catch(e){ return String(ts);} }
+    function renderCsvRows(files){
+      if (!csvTableBody) return;
+      csvTableBody.innerHTML = '';
+      (files||[]).forEach(f => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${f.name}${f.active ? ' <span class="chip sm">Active</span>' : ''}</td>
+          <td>${fmtBytes(f.size)} · ${fmtDate(f.mtime)}</td>
+          <td class="actions-inline">
+            <button class="btn sm icon-btn" aria-label="Set Active" title="Set Active" data-act="select" data-name="${f.name}"><iconify-icon icon="mdi:check-circle-outline"></iconify-icon></button>
+            <button class="btn ghost sm icon-btn" aria-label="Preview" title="Preview" data-act="preview" data-name="${f.name}"><iconify-icon icon="mdi:eye-outline"></iconify-icon></button>
+            <a class="btn ghost sm icon-btn" aria-label="Download" title="Download" href="/api/csv/download/${encodeURIComponent(f.name)}"><iconify-icon icon="mdi:download"></iconify-icon></a>
+            <button class="btn danger sm icon-btn" aria-label="Delete" title="Delete" data-act="delete" data-name="${f.name}"><iconify-icon icon="mdi:trash-can-outline"></iconify-icon></button>
+          </td>`;
+        csvTableBody.appendChild(tr);
+      });
+    }
+    async function loadCsvList(){ try{ const data = await getJson('/api/csv/list'); renderCsvRows(data.files||[]);}catch(e){ toast('Failed to load CSV list','error'); } }
+    function bindCsvTableActions(){ if (!csvTableBody) return; csvTableBody.addEventListener('click', async(ev)=>{ const btn = ev.target.closest('button'); if(!btn) return; const act=btn.getAttribute('data-act'); const name=btn.getAttribute('data-name'); if (act==='select'){ try{ const resp=await postForm('/api/csv/select',{name}); if (resp&&resp.active){ activeCsv && (activeCsv.textContent=resp.active); toast('Active CSV set to '+resp.active,'success'); await loadCsvList(); } }catch(e){ alert('Failed to set active CSV'); } } else if (act==='preview'){ try{ const data=await getJson('/api/csv/preview?name='+encodeURIComponent(name)+'&limit=10'); previewTitle && (previewTitle.textContent='Preview: '+name); if (previewHead) previewHead.innerHTML=''; (data.headers||[]).forEach(h=>{ const th=document.createElement('th'); th.textContent=h; previewHead.appendChild(th); }); if (previewBody) previewBody.innerHTML=''; (data.rows||[]).forEach(r=>{ const tr=document.createElement('tr'); (data.headers||[]).forEach(h=>{ const td=document.createElement('td'); td.textContent=r[h]||''; tr.appendChild(td); }); previewBody.appendChild(tr); }); previewWrap && (previewWrap.style.display='block'); }catch(e){ alert('Failed to preview'); } } else if (act==='delete'){ if(!confirm('Delete '+name+'?')) return; try{ startProgress(); const res=await fetch('/api/csv/'+encodeURIComponent(name),{method:'DELETE'}); endProgress(); if(!res.ok) throw new Error('Delete failed'); toast('Deleted '+name,'success'); await loadCsvList(); }catch(e){ alert('Failed to delete (if it is active, select another CSV first)'); } } }); }
+    bindCsvTableActions();
+    uploadCsvBtn && uploadCsvBtn.addEventListener('click', async ()=>{ const f = csvFileInput?.files && csvFileInput.files[0]; if (!f){ alert('Choose a CSV file'); return; } try{ await uploadFile('/api/csv/upload', f); toast('Uploaded '+f.name,'success'); await loadCsvList(); }catch(e){ alert('Upload failed'); } });
+    refreshCsvBtn && refreshCsvBtn.addEventListener('click', loadCsvList);
+    closePreviewBtn && closePreviewBtn.addEventListener('click', ()=>{ if (previewWrap) previewWrap.style.display='none'; });
+
+    // Campaigns
+    async function loadCampaigns(){
+      try{
+        const data = await getJson('/api/campaigns/list');
+        // populate built-ins
+        if (builtinCampBody){ builtinCampBody.innerHTML=''; (data.builtin||[]).forEach(it=>{ const tr=document.createElement('tr'); tr.innerHTML = `<td>${it.name}</td><td>${it.module}</td>`; builtinCampBody.appendChild(tr); }); }
+        // populate custom
+        if (customCampBody){ customCampBody.innerHTML=''; (data.custom||[]).forEach(it=>{ const tr=document.createElement('tr'); tr.innerHTML = `<td>${it.name}</td><td>${it.module}</td><td class="actions-inline"><button class="btn danger sm icon-btn" data-act="del" data-module="${it.module}" title="Delete"><iconify-icon icon="mdi:trash-can-outline"></iconify-icon></button></td>`; customCampBody.appendChild(tr); }); }
+        // populate selector
+        if (campSelect){ campSelect.innerHTML=''; (data.custom||[]).forEach(it=>{ const opt=document.createElement('option'); opt.value=it.module; opt.textContent = `${it.name} (${it.module})`; campSelect.appendChild(opt); }); }
+      }catch(e){ toast('Failed to load campaigns','error'); }
+    }
+    // Helper: refresh dashboard dropdown with latest list (builtin + custom)
+    async function refreshDashboardCampaignDropdown(selectLabelToSet){
+      try{
+        const data = await getJson('/api/campaigns/list');
+        // Build label strings "Name (module)" for both built-in and custom
+        const items = [];
+        (data.builtin||[]).forEach(it => { items.push({ label: `${it.name} (${it.module})` }); });
+        (data.custom||[]).forEach(it => { items.push({ label: `${it.name} (${it.module})` }); });
+        if (campaignSelect){
+          const cur = campaignSelect.value;
+          campaignSelect.innerHTML = '';
+          items.forEach(it => { const opt=document.createElement('option'); opt.value=it.label; opt.textContent=it.label; campaignSelect.appendChild(opt); });
+          if (selectLabelToSet && items.some(x=>x.label===selectLabelToSet)){
+            campaignSelect.value = selectLabelToSet;
+            // Inform backend selection
+            await postForm('/api/select_campaign', { campaign: selectLabelToSet });
+            if (campaignBadge) campaignBadge.innerHTML = 'Campaign: <strong>' + selectLabelToSet.split(' (')[0] + '</strong>';
+          } else if (items.length && !campaignSelect.value){
+            campaignSelect.value = items[0].label;
+          }
+        }
+      }catch(e){ /* ignore */ }
+    }
+
+    async function createCampaign(){
+      const nm=(campNameInput?.value||'').trim();
+      const mod=(document.getElementById('campModule')?.value||'').trim();
+      const agent=agentTextEl?.value||''; const sess=sessionTextEl?.value||'';
+      if(!nm){ alert('Enter a campaign name'); return; }
+      try{
+        const resp = await postForm('/api/campaigns/create',{name:nm, module:mod, agent_text:agent, session_text:sess});
+        if (resp && resp.supabase_error){ toast('Supabase insert warn: '+resp.supabase_error, 'error'); }
+        toast('Created '+nm,'success');
+        // Update lists and dashboard dropdown, then switch to dashboard with new selection
+        const label = nm + ' (' + resp.module + ')';
+        await loadCampaigns();
+        await refreshDashboardCampaignDropdown(label);
+        location.hash = '#dashboard';
+        toast('Loaded '+label+' in Dashboard','success');
+      }catch(e){ alert('Failed to create campaign'); }
+    }
+    async function loadCampaignIntoEditor(){ const mod=campSelect?.value; if(!mod){ alert('Select a campaign'); return; } try{ const data=await getJson('/api/campaigns/get?module='+encodeURIComponent(mod)); if (campNameInput) campNameInput.value = data.name || mod; if (agentTextEl) agentTextEl.value = data.agent_text || ''; if (sessionTextEl) sessionTextEl.value = data.session_text || ''; toast('Loaded '+(data.name||mod),'info'); }catch(e){ alert('Failed to load campaign'); } }
+    async function saveCampaignEdits(){
+      const mod=campSelect?.value; if(!mod){ alert('Select a campaign'); return; }
+      const moduleOnly = (mod.match(/\((.*)\)\s*$/)||[])[1] || mod; // extract module from "Name (module)"
+      const name=(campNameInput?.value||'').trim() || moduleOnly;
+      const agent=agentTextEl?.value||''; const sess=sessionTextEl?.value||'';
+      try{
+        await postForm('/api/campaigns/update',{module:moduleOnly, name, agent_text:agent, session_text:sess});
+        toast('Saved '+name,'success');
+        await loadCampaigns();
+        const label = name + ' (' + moduleOnly + ')';
+        await refreshDashboardCampaignDropdown(label);
+        location.hash = '#dashboard';
+        toast('Loaded '+label+' in Dashboard','success');
+      }catch(e){ alert('Failed to save campaign'); }
+    }
+    async function seedSupabase(){ try{ const res=await postForm('/api/campaigns/seed_supabase',{}); if (res.errors && res.errors.length){ toast('Seed errors: '+res.errors[0],'error'); } else { toast('Seeded '+(res.count||0)+' campaigns','success'); } }catch(e){ alert('Failed to seed Supabase'); } }
+    async function uploadPrompt(which, file){ const fd=new FormData(); fd.append('which', which); fd.append('file', file); startProgress(); const res = await fetch('/api/campaigns/upload_prompts',{method:'POST', body: fd}); endProgress(); if(!res.ok){ alert('Upload failed'); return; } const data=await res.json(); if (which==='agent' && agentTextEl) agentTextEl.value = data.text || ''; if (which==='session' && sessionTextEl) sessionTextEl.value = data.text || ''; }
+    // Wire campaign events
+    createCampBtn && createCampBtn.addEventListener('click', createCampaign);
+    loadCampBtn && loadCampBtn.addEventListener('click', loadCampaignIntoEditor);
+    saveCampBtn && saveCampBtn.addEventListener('click', saveCampaignEdits);
+    seedBtn && seedBtn.addEventListener('click', seedSupabase);
+    agentUploadBtn && agentUploadBtn.addEventListener('click', ()=> agentFile?.click());
+    sessionUploadBtn && sessionUploadBtn.addEventListener('click', ()=> sessionFile?.click());
+    agentFile && agentFile.addEventListener('change', async (e)=>{ const f=e.target.files[0]; if(f) await uploadPrompt('agent', f); });
+    sessionFile && sessionFile.addEventListener('change', async (e)=>{ const f=e.target.files[0]; if(f) await uploadPrompt('session', f); });
+    customCampBody && customCampBody.addEventListener('click', async (ev)=>{ const btn=ev.target.closest('button'); if(!btn) return; if(btn.getAttribute('data-act')==='del'){ const mod=btn.getAttribute('data-module'); if(!confirm('Delete campaign '+mod+'?')) return; try{ startProgress(); const res=await fetch('/api/campaigns/'+encodeURIComponent(mod),{method:'DELETE'}); endProgress(); if(!res.ok) throw new Error('Delete failed'); toast('Deleted '+mod,'success'); await loadCampaigns(); }catch(e){ alert('Failed to delete campaign'); } } });
+
+    // Router
+    function showView(which){
+      if (which === 'csv'){
+        dashboardView.style.display = 'none';
+        campaignsView.style.display = 'none';
+        csvView.style.display = 'block';
+        loadCsvList();
+      } else if (which === 'campaigns') {
+        dashboardView.style.display = 'none';
+        csvView.style.display = 'none';
+        campaignsView.style.display = 'block';
+        loadCampaigns();
+      } else {
+        csvView.style.display = 'none';
+        campaignsView.style.display = 'none';
+        dashboardView.style.display = 'block';
+      }
+    }
+    function route(){ const h=(location.hash||'#dashboard').replace('#',''); showView(h); }
+    window.addEventListener('hashchange', route);
+
+    // Initialize
+    refreshStatus();
+    setInterval(refreshStatus, 1000);
+    route();
+  })();
+</script>
+
+{% endblock %}

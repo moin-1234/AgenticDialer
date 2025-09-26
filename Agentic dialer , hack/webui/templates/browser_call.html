@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% block content %}
+  <section class="controls">
+    <div class="controls-form">
+      <div>
+        <div class="badge">Room: <strong>{{ room }}</strong></div>
+        <div class="badge">Server: <strong>{{ livekit_url }}</strong></div>
+      </div>
+      <div style="margin-left:auto; display:flex; gap:8px;">
+        <button id="btn-join" class="btn primary">Join</button>
+        <button id="btn-leave" class="btn" disabled>Leave</button>
+        <button id="btn-mute" class="btn" disabled>Mute</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="leads" style="margin-top:16px;">
+    <div class="leads-header">
+      <h2>Browser Call</h2>
+    </div>
+    <div class="panel">
+      <p class="muted">This page connects your browser to the LiveKit room and streams your mic to the agent. Ensure microphone permissions are allowed.</p>
+      <div id="status" class="muted">Status: idle</div>
+    </div>
+    <!-- Hidden config element to pass template variables to JS safely -->
+    <div id="lk-config" data-room="{{ room }}" data-livekit-url="{{ livekit_url }}" style="display:none"></div>
+  </section>
+
+  <script type="module">
+    // Read values from the hidden config element
+    const cfg = document.getElementById('lk-config');
+    const roomName = cfg.getAttribute('data-room');
+    const livekitUrl = cfg.getAttribute('data-livekit-url');
+    const statusEl = document.getElementById('status');
+    const btnJoin = document.getElementById('btn-join');
+    const btnLeave = document.getElementById('btn-leave');
+    const btnMute = document.getElementById('btn-mute');
+
+    let room;
+    let localPub = null;
+    let isMuted = false;
+
+    function setStatus(text){ statusEl.textContent = 'Status: ' + text; }
+    function setUi(joined){
+      btnJoin.disabled = joined;
+      btnLeave.disabled = !joined;
+      btnMute.disabled = !joined;
+      btnMute.textContent = isMuted ? 'Unmute' : 'Mute';
+    }
+
+    async function importLiveKit(){
+      const sources = [
+        '/static/vendor/livekit-client.esm.min.js',
+        'https://unpkg.com/livekit-client@2.3.3/dist/livekit-client.esm.min.js',
+        'https://cdn.jsdelivr.net/npm/livekit-client@2.3.3/dist/livekit-client.esm.min.js',
+        'https://unpkg.com/livekit-client/dist/livekit-client.esm.min.js',
+      ];
+      for (const src of sources){
+        try {
+          const mod = await import(src);
+          if (mod?.Room) return mod;
+        } catch (e) {
+          // try next
+        }
+      }
+      throw new Error('LiveKit ESM module not loaded');
+    }
+
+    async function fetchToken(identity){
+      const url = new URL('/api/token', window.location.origin);
+      url.searchParams.set('room', roomName);
+      url.searchParams.set('identity', identity);
+      const res = await fetch(url.toString());
+      if(!res.ok){ throw new Error('Failed to get token'); }
+      const data = await res.json();
+      return data.token;
+    }
+
+    async function join(){
+      try{
+        setStatus('loading sdk');
+        const { Room, LocalAudioTrack, RoomEvent } = await importLiveKit();
+
+        setStatus('requesting token');
+        const identity = 'browser-' + Math.random().toString(36).slice(2, 8);
+        const token = await fetchToken(identity);
+
+        setStatus('connecting');
+        room = new Room();
+        await room.connect(livekitUrl, token);
+        setStatus('connected, publishing mic');
+
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const track = new LocalAudioTrack(stream.getAudioTracks()[0]);
+        localPub = await room.localParticipant.publishTrack(track);
+
+        room.on(RoomEvent.TrackSubscribed, (track) => {
+          if (track.kind === 'audio') {
+            const el = track.attach();
+            el.autoplay = true;
+            el.style.display = 'none';
+            document.body.appendChild(el);
+          }
+        });
+
+        setUi(true);
+        setStatus('in call');
+      }catch(err){
+        console.error(err);
+        setStatus('error: ' + (err?.message || err));
+      }
+    }
+
+    async function leave(){
+      try{
+        setStatus('leaving');
+        if(room){ await room.disconnect(); }
+      }catch(e){}
+        setUi(false);
+        setStatus('idle');
+    }
+
+    async function toggleMute(){
+      try{
+        if(!room) return;
+        isMuted = !isMuted;
+        if(localPub){
+          await localPub.setTrackEnabled(!isMuted);
+        }
+        setUi(true);
+      }catch(e){console.error(e)}
+    }
+
+    // Initialize UI state
+    setUi(false);
+    btnJoin.addEventListener('click', join);
+    btnLeave.addEventListener('click', leave);
+    btnMute.addEventListener('click', toggleMute);
+  </script>
+{% endblock %}
+
