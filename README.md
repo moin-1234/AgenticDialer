@@ -1,4 +1,4 @@
-# Demand-Tech Agentic Dialer
+# Agentic Dialer
 
 A production-ready, agentic outbound calling assistant with a modern Web UI, powered by LiveKit Agents and Google Realtime AI. It supports running fully from the console for quick testing and via a sleek web dashboard for managing lead lists, starting/stopping calls, and joining a browser-based audio session.
 
